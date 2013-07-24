@@ -1,2 +1,5 @@
 flickrannex.conf
+build/
+dist/
+*.egg-info/
 *.pyc
