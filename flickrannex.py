@@ -1,9 +1,11 @@
 #!/usr/bin/env python2
+
 import os
 import sys
 import json
 import time
 import inspect
+import tempfile
 
 conf = False
 version = "0.1.10"
@@ -35,8 +37,7 @@ api_secret = "e28467365581abd4"
 
 flickr = flickrapi.FlickrAPI(api_key, api_secret)
 user_id = False
-if not os.path.exists(pwd + "/temp"):
-    os.mkdir(pwd + "/temp")
+
 import base64
 
 def login(uname):
@@ -85,14 +86,14 @@ def postFile(subject, filename, folder, git_top_level):
 
     tags = []
     if conf["encrypted"]:
-        tfile = pwd + "/temp/encoded-" + subject
-        f = open(tfile, 'wb')
+        thnd, tfile = tempfile.mkstemp(prefix='encoded-', suffix=subject)
+        f = os.fdopen(thnd)
         text = readFile(filename, "rb")
         text = base64.b64encode(text)
     
         w = png.Writer(width, height, text={"data": text})
         w.write(f, pixels)
-        f.close()
+        os.close(thnd)
     else:
         tfile = filename
 
@@ -116,9 +117,8 @@ def postFile(subject, filename, folder, git_top_level):
             flickr.photosets_create(title=folder, primary_photo_id=res[0].text)
 
     if conf["encrypted"]:
-        os.unlink(pwd + "/temp/encoded-" + subject)
-
-    if len(res):
+        os.unlink(tfile)
+    if res:
         common.log("Done: " + repr(res))
     else:
         print("Failed to store: " + repr(res))
