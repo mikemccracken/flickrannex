@@ -333,6 +333,7 @@ class Writer:
                  planes=None,
                  colormap=None,
                  maxval=None,
+                 text=None,
                  chunk_limit=2**20):
         """
         Create a PNG encoder object.
@@ -361,6 +362,9 @@ class Writer:
           zlib compression level: 0 (none) to 9 (more compressed); default: -1 or None.
         interlace
           Create an interlaced image.
+        text
+          A dictionary of key:value pairs in ISO 8859-1 (Latin-1).
+          This dictionary is written out as ``tEXt`` chunks.
         chunk_limit
           Write multiple ``IDAT`` chunks to save memory.
 
@@ -595,6 +599,7 @@ class Writer:
         self.chunk_limit = chunk_limit
         self.interlace = bool(interlace)
         self.palette = check_palette(palette)
+        self.text = text
 
         self.color_type = 4*self.alpha + 2*(not greyscale) + 1*self.colormap
         assert self.color_type in (0,2,3,4,6)
@@ -719,6 +724,24 @@ class Writer:
             else:
                 write_chunk(outfile, 'bKGD',
                             struct.pack("!3H", *self.background))
+
+        # http://www.w3.org/TR/PNG/#11tEXt
+        if self.text is not None:
+            for k in self.text:
+
+                # the specification only allows ISO-8895-1...
+                k_latin = k.encode("ISO-8859-1")
+                v_latin = self.text[k].encode("ISO-8859-1")
+
+                # ...and limits the key to 79 bytes.
+                if len(k_latin) > 79:
+                    k_latin = k_latin[:79]
+
+                chunk_len = len(k_latin) + len('\0') + len(v_latin)
+                for k in self.text:
+                    write_chunk(outfile, 'tEXt', 
+                        struct.pack("!%ds" % chunk_len, 
+                            (k_latin + '\0'+ v_latin)))
 
         # http://www.w3.org/TR/PNG/#11IDAT
         if self.compression is not None:
@@ -1357,6 +1380,9 @@ class Reader:
         # method for how this is used.
         self.atchunk = None
 
+        # any text data in the PNG: http://www.w3.org/TR/PNG-Chunks.html#C.tEXt
+        self.text = dict()
+
         if _guess is not None:
             if isarray(_guess):
                 kw["bytes"] = _guess
@@ -1862,6 +1888,9 @@ class Reader:
             if (self.colormap and len(data) != 3 or
                 not self.colormap and len(data) != self.planes):
                 raise FormatError("sBIT chunk has incorrect length.")
+        elif type == 'tEXt':
+            (k, v) = data.split('\0')
+            self.text[k] = v
 
     def read(self, lenient=False):
         """
@@ -1933,7 +1962,7 @@ class Reader:
                 meta[attr] = a
         if self.plte:
             meta['palette'] = self.palette()
-        return self.width, self.height, pixels, meta
+        return self.width, self.height, pixels, meta, self.text
 
 
     def read_flat(self):

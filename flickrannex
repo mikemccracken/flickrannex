@@ -74,7 +74,7 @@ def postFile(subject, filename, folder):
         else:
             print("At %s%%" % progress)
 
-    width, height, pixels, meta = fapng.Reader(filename=small_png_fn).read()
+    width, height, pixels, meta, text = fapng.Reader(filename=small_png_fn).read()
     upper_limit = 40234050
     common.log("pre %s size: %s more than %s." % ( filename, os.path.getsize(filename), upper_limit))
     if os.path.getsize(filename) > upper_limit:
