@@ -353,7 +353,7 @@ git annex content flickr exclude=largerthan=30mb
 
 # If you have an unencrypted repository also use this
 git annex content flickr uuid include=*.jpg or include=*.jpeg or include=*.gif or include=*.png
-''' % (os.getcwd(), os.getcwd(), encryption)
+''' % (os.path.abspath(sys.argv[0]), encryption)
             print setup
             common.log("Saving " + repr(configfile), 0)
             saveFile(configfile, json.dumps(conf))
