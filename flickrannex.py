@@ -118,7 +118,7 @@ def postFile(subject, filename, folder, git_top_level):
                         description=os.path.basename(tfile), tags = '"' + '" "'.join(tags) + '"',
                         callback=func)
 
-    if len(res):
+    if res is not None:
         if isinstance(folder, int) or isinstance(folder, long):
             flickr.photosets_addPhoto(photoset_id=folder, photo_id=res[0].text)
         else:
@@ -126,7 +126,7 @@ def postFile(subject, filename, folder, git_top_level):
 
     if conf["encrypted"]:
         os.unlink(tfile)
-    if res:
+    if res is not None:
         common.log("Done: " + repr(res))
     else:
         print("Failed to store: " + repr(res))
