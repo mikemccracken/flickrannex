@@ -9,5 +9,6 @@ setup(
     packages = ['libflickrannex'],
     package_data = {
         'libflickrannex' : ['logo_small.png'],
-        }
+        },
+    install_requires = ['flickrapi', 'pypng', 'appdirs', 'distribute'],
     )
