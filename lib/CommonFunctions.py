@@ -24,11 +24,10 @@ import io
 import inspect
 import time
 import HTMLParser
-#import chardet
 import json
 
-plugin = sys.modules["__main__"].plugin
-dbglevel = sys.modules["__main__"].dbglevel
+plugin = ''
+dbglevel = 0
 
 USERAGENT = u"Mozilla/5.0 (Windows NT 6.2; Win64; x64; rv:16.0.1) Gecko/20121011 Firefox/16.0.1"
 

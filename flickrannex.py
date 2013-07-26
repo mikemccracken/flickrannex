@@ -29,6 +29,9 @@ else:
     dbglevel = 0
 
 import CommonFunctions as common
+common.dbglevel = dbglevel
+common.plugin = plugin
+
 import flickrapi
 import png
 
