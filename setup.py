@@ -5,9 +5,9 @@ from setuptools import setup, find_packages
 setup(
     name = 'flickrannex',
     version = '0.0',
-    scripts = ['flickrannex.py'],
-    packages = ['lib'],
+    scripts = ['flickrannex'],
+    packages = ['libflickrannex'],
     package_data = {
-        'lib' : ['logo_small.png'],
+        'libflickrannex' : ['logo_small.png'],
         }
     )
