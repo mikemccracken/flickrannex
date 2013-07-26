@@ -338,10 +338,10 @@ def main():
             setup = '''
 Please run the following commands in your annex directory:
 
-git config annex.flickr-hook '/usr/bin/python2 %s/flickrannex.py'
+git config annex.flickr-hook '%s'
 git annex initremote flickr type=hook hooktype=flickr encryption=%s
 git annex describe flickr "the flickr library"
-''' % (os.getcwd(), encryption)
+''' % (os.path.abspath(sys.argv[0]), encryption)
             print setup
             common.log("Saving flickrannex.conf", 0)
             saveFile(config_fn, json.dumps(conf))
