@@ -38,7 +38,7 @@ common.dbglevel = dbglevel
 common.plugin = plugin
 
 import flickrapi
-import png
+import libflickrannex.png as fapng
 
 api_key = "2f6b468927a824c00b33c4672b10d24e"
 api_secret = "e28467365581abd4"
@@ -86,7 +86,7 @@ def postFile(subject, filename, folder, git_top_level):
         else:
             print("At %s%%" % progress)
 
-    width, height, pixels, meta = png.Reader(filename=small_png_fn).read()
+    width, height, pixels, meta = fapng.Reader(filename=small_png_fn).read()
     upper_limit = 40234050
     if os.path.getsize(filename) > upper_limit:
         print("%s size: %s more than %s. Skipping" % ( filename, os.path.getsize(filename), upper_limit))
@@ -99,7 +99,7 @@ def postFile(subject, filename, folder, git_top_level):
         text = readFile(filename, "rb")
         text = base64.b64encode(text)
     
-        w = png.Writer(width, height, text={"data": text})
+        w = fapng.Writer(width, height, text={"data": text})
         w.write(f, pixels)
         os.close(thnd)
     else:
@@ -198,7 +198,7 @@ def getFile(subject, filename, folder):
         res = common.fetchPage({"link": url.attrib["source"]})
 
         if "encrypted" in conf and conf["encrypted"]:
-            r=png.Reader(bytes=res["content"])
+            r=fapng.Reader(bytes=res["content"])
             width, height, pixels, meta, text = r.read()
             text = base64.b64decode(text["data"])
             saveFile(filename, text, "wb")
