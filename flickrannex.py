@@ -37,6 +37,9 @@ if "--configfile" in sys.argv:
     configfile = sys.argv[sys.argv.index("--configfile") + 1]
 
 import CommonFunctions as common
+common.dbglevel = dbglevel
+common.plugin = plugin
+
 import flickrapi
 import png
 
