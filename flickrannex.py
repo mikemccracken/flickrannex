@@ -6,10 +6,15 @@ import json
 import time
 import inspect
 import tempfile
+import appdirs
 
 conf = False
 version = "0.1.10"
 plugin = "flickrannex-" + version
+
+config_dir = appdirs.user_data_dir('flickrannex')
+if not os.path.exists(config_dir):
+    os.makedirs(config_dir)
 
 pwd = os.path.dirname(__file__)
 if not pwd:
@@ -22,11 +27,14 @@ if "--dbglevel" in sys.argv:
 else:
     dbglevel = 0
 
+if "--directories-as-tags" in sys.argv:
+    dirtags = 1
+else:
+    dirtags = 0
+
+config = os.path.join(config_dir, 'config.json')
 if "--configfile" in sys.argv:
     configfile = sys.argv[sys.argv.index("--configfile") + 1]
-else:
-    configfile = pwd + "/flickrannex.conf"
-        
 
 import CommonFunctions as common
 import flickrapi
