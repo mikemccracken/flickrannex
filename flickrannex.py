@@ -96,7 +96,7 @@ def postFile(subject, filename, folder):
     common.log("Uploading: " + tfile)
 
     res = flickr.upload(filename=tfile, is_public=0, title=subject, description=os.path.basename(tfile), callback=func)
-    if res:
+    if res is not None:
         if isinstance(folder, int):
             flickr.photosets_addPhoto(photoset_id=folder, photo_id=res[0].text)
         else:
@@ -104,7 +104,7 @@ def postFile(subject, filename, folder):
 
     if conf["encrypted"]:
         os.unlink(tfile)
-    if res:
+    if res is not None:
         common.log("Done: " + repr(res))
     else:
         sys.exit(1)
