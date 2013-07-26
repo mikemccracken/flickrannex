@@ -17,18 +17,15 @@ config_fn = os.path.join(config_dir, 'config.json')
 if not os.path.exists(config_dir):
     os.makedirs(config_dir)
 
-pwd = os.path.dirname(__file__)
-if not pwd:
-    pwd = os.getcwd()
-sys.path.append(pwd + '/lib')
-sys.path.append(pwd + '/lib/pypng/')
+import pkg_resources
+small_png_fn = pkg_resources.resource_filename('lib', 'logo_small.png')
 
 if "--dbglevel" in sys.argv:
     dbglevel = int(sys.argv[sys.argv.index("--dbglevel") + 1])
 else:
     dbglevel = 0
 
-import CommonFunctions as common
+import lib.CommonFunctions as common
 common.dbglevel = dbglevel
 common.plugin = plugin
 
@@ -77,7 +74,7 @@ def postFile(subject, filename, folder):
         else:
             print("At %s%%" % progress)
 
-    width, height, pixels, meta, text = png.Reader(filename=pwd + "/logo_small.png").read()
+    width, height, pixels, meta, text = png.Reader(filename=small_png_fn).read()
     upper_limit = 40234050
     common.log("pre %s size: %s more than %s." % ( filename, os.path.getsize(filename), upper_limit))
     if os.path.getsize(filename) > upper_limit:
