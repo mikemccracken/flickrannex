@@ -6,10 +6,16 @@ import json
 import time
 import inspect
 import tempfile
+import appdirs
 
 conf = False
 version = "0.1.5"
 plugin = "flickrannex-" + version
+
+config_dir = appdirs.user_data_dir('flickrannex')
+config_fn = os.path.join(config_dir, 'config.json')
+if not os.path.exists(config_dir):
+    os.makedirs(config_dir)
 
 pwd = os.path.dirname(__file__)
 if not pwd:
@@ -259,7 +265,7 @@ def main():
     common.log("ARGS: " + repr(" ".join(envargs + args)))
 
 
-    conf = readFile(pwd + "/flickrannex.conf")
+    conf = readFile(config_fn)
     try:
         conf = json.loads(conf)
     except Exception as e:
@@ -338,7 +344,7 @@ git annex describe flickr "the flickr library"
 ''' % (os.getcwd(), encryption)
             print setup
             common.log("Saving flickrannex.conf", 0)
-            saveFile(pwd + "/flickrannex.conf", json.dumps(conf))
+            saveFile(config_fn, json.dumps(conf))
         else:
             print("Error during setup. Please try again")
     else:
