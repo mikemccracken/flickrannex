@@ -29,7 +29,7 @@ if "--directories-as-tags" in sys.argv:
 else:
     dirtags = 0
 
-config = os.path.join(config_dir, 'config.json')
+configfile = os.path.join(config_dir, 'config.json')
 if "--configfile" in sys.argv:
     configfile = sys.argv[sys.argv.index("--configfile") + 1]
 
