@@ -342,18 +342,18 @@ def main():
             setup = '''
 Please run the following commands in your annex directory:
 
-git config annex.flickr-hook '/usr/bin/python2 %s/flickrannex.py'
+git config annex.flickr-hook '/usr/bin/python2 {scriptname}/flickrannex.py'
 
 # If you have a direct mode repository and want to use your directores as tags, use this hook instead
-git config annex.flickr-hook 'GIT_TOP_LEVEL=`git rev-parse --show-toplevel` /usr/bin/python2 %s/flickrannex.py'
+git config annex.flickr-hook 'GIT_TOP_LEVEL=`git rev-parse --show-toplevel` /usr/bin/python2 {scriptname}/flickrannex.py'
 
-git annex initremote flickr type=hook hooktype=flickr encryption=%s
+git annex initremote flickr type=hook hooktype=flickr encryption={encryption}
 git annex describe flickr "the flickr library"
 git annex content flickr exclude=largerthan=30mb
 
 # If you have an unencrypted repository also use this
 git annex content flickr uuid include=*.jpg or include=*.jpeg or include=*.gif or include=*.png
-''' % (os.path.abspath(sys.argv[0]), encryption)
+'''.format(scriptname=os.path.abspath(sys.argv[0]), encryption=encryption)
             print setup
             common.log("Saving " + repr(configfile), 0)
             saveFile(configfile, json.dumps(conf))
