@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 import os
 import sys
@@ -7,6 +7,12 @@ import time
 import inspect
 import tempfile
 import appdirs
+import base64
+import logging
+
+logging.basicConfig(filename="/tmp/flickrannex.log",
+                    format="%(levelname)s %(asctime)s %(funcName)s %(lineno)d %(msg)s",
+                    level=logging.INFO)
 
 conf = False
 version = "0.1.10"
@@ -34,8 +40,6 @@ if "--configfile" in sys.argv:
     configfile = sys.argv[sys.argv.index("--configfile") + 1]
 
 import libflickrannex.CommonFunctions as common
-common.dbglevel = dbglevel
-common.plugin = plugin
 
 import flickrapi
 import libflickrannex.png as fapng
@@ -46,41 +50,41 @@ api_secret = "e28467365581abd4"
 flickr = flickrapi.FlickrAPI(api_key, api_secret)
 user_id = False
 
-import base64
+
 
 def login(uname):
-    common.log(uname)
+    logging.info(uname)
     (token, frob) = flickr.get_token_part_one(perms='delete')
     if not token: 
         try:
             raw_input("Press ENTER after you authorized this program")
         except Exception as e:
-            common.log("Sleeping for 60s while waiting for user to authorize program: " + repr(e))
+            logging.info("Sleeping for 60s while waiting for user to authorize program: " + repr(e))
             time.sleep(60)
     flickr.get_token_part_two((token, frob))
     global user_id
     user_id = flickr.people_findByEmail(find_email=uname)
     user_id = user_id[0].attrib["nsid"]
-    common.log("Done: " + repr(token) + " - " + repr(frob) + " - " + repr(user_id))
+    logging.info("Done: " + repr(token) + " - " + repr(frob) + " - " + repr(user_id))
 
 def verifyFileType(filename):
-    common.log(filename)
+    logging.info(filename)
     status = False
     fname, ext = os.path.splitext(os.path.basename(filename))
     # Video gets converted to flv.
     # pdf gets (Horribly badly) converted to jpg
     if ext.lower() in [".jpg", ".jpeg", ".gif", ".png"]:
-        common.log("Filetype can be uploaded: " + ext)
+        logging.info("Filetype can be uploaded: " + ext)
         status = True
 
-    common.log("Done: " + repr(status))
+    logging.info("Done: " + repr(status))
     return status
 
 def postFile(subject, filename, folder, git_top_level):
-    common.log("%s to %s - %s" % ( filename, repr(folder), subject))
+    logging.info("%s to %s - %s" % ( filename, repr(folder), subject))
 
     def func(progress, done):
-        common.log("func: %s - %s" % (repr(progress), repr(done)))
+        logging.info("func: %s - %s" % (repr(progress), repr(done)))
         if len(done):
             print("Done uploading")
         else:
@@ -106,13 +110,13 @@ def postFile(subject, filename, folder, git_top_level):
         tfile = filename
 
         if git_top_level:
-            common.log("git top level directory: %s" % git_top_level)
+            logging.info("git top level directory: %s" % git_top_level)
             dirpath = os.path.relpath(os.path.dirname(tfile), git_top_level)
             if dirpath.find(".git") == -1:
                 tags = dirpath.split(os.sep)
-                common.log("Tags added to photo " + repr(tags))
+                logging.info("Tags added to photo " + repr(tags))
 
-    common.log("Uploading: " + tfile)
+    logging.info("Uploading: " + tfile)
 
     res = flickr.upload(filename=tfile, is_public=0, title=subject,
                         description=os.path.basename(tfile), tags = '"' + '" "'.join(tags) + '"',
@@ -127,17 +131,17 @@ def postFile(subject, filename, folder, git_top_level):
     if conf["encrypted"]:
         os.unlink(tfile)
     if res is not None:
-        common.log("Done: " + repr(res))
+        logging.info("Done: " + repr(res))
     else:
         print("Failed to store: " + repr(res))
         sys.exit(1)
 
 def findFile(subject, folder, root=False):
-    common.log(subject + " - " + repr(folder) + " - " + repr(user_id))
+    logging.info(subject + " - " + repr(folder) + " - " + repr(user_id))
     file = False
     page=1
     while not file:
-        common.log("Trying page: " + repr(page))
+        logging.info("Trying page: " + repr(page))
         if root:
             photos = flickr.photosets_getPhotos(photoset_id=folder, per_page=500, page=page)
         else:
@@ -145,30 +149,30 @@ def findFile(subject, folder, root=False):
         photos = photos.find("photoset")
         for s in photos.findall('photo'):
             ttitle = s.attrib["title"]
-            common.log("Found title: " + repr(ttitle), 2)
+            logging.info("Found title: " + repr(ttitle))
             if ttitle == subject:
                 if root:
                     file = ttitle
                 else:
                     file = long(s.attrib["id"])
 
-                common.log("Done: " + repr(file))
+                logging.info("Done: " + repr(file))
                 return file
 
         if int(photos.attrib["pages"]) > page:
             page +=1
         else:
-            common.log("Error, found nothing:" + repr(photos))
-            common.log("Error, found nothing:" + repr(photos.attrib))
+            logging.info("Error, found nothing:" + repr(photos))
+            logging.info("Error, found nothing:" + repr(photos.attrib))
             break
-    common.log("Failure: " + repr(file))
+    logging.info("Failure: " + repr(file))
     return False
 
 def checkFile(subject, folder):
-    common.log(subject + " - " + repr(folder) + " - " + repr(user_id))
+    logging.info(subject + " - " + repr(folder) + " - " + repr(user_id))
 
     if not isinstance(folder, int) and not isinstance(folder, long):
-        common.log("No set exists, thus no files exists: " + repr(folder) +  " - " + repr(type(folder)))
+        logging.info("No set exists, thus no files exists: " + repr(folder) +  " - " + repr(type(folder)))
         return False
 
     org_sub = subject
@@ -176,15 +180,15 @@ def checkFile(subject, folder):
     file = findFile(subject, folder)
 
     if file:
-        common.log("Found: " + repr(file))
+        logging.info("Found: " + repr(file))
         print(org_sub)
         return True
     else:
-        common.log("Failure")
+        logging.info("Failure")
         return False
 
 def getFile(subject, filename, folder):
-    common.log(subject)
+    logging.info(subject)
 
     file = findFile(subject, folder)
 
@@ -193,7 +197,7 @@ def getFile(subject, filename, folder):
         url = url.find('sizes').findall('size')
         url = url[len(url) -1]
 
-        common.log("Using: " + repr(url.attrib["label"]) + " - " + repr(url.attrib["source"]), 3)
+        logging.info("Using: " + repr(url.attrib["label"]) + " - " + repr(url.attrib["source"]))
         
         res = common.fetchPage({"link": url.attrib["source"]})
 
@@ -205,27 +209,27 @@ def getFile(subject, filename, folder):
         else:
             saveFile(filename, res["content"], "wb")
 
-        common.log("Done")
+        logging.info("Done")
     else:
-        common.log("Failure")
+        logging.info("Failure")
 
 
 def deleteFile(subject, folder):
-    common.log(subject + " - " + repr(folder))
+    logging.info(subject + " - " + repr(folder))
 
     file = findFile(subject, folder)
 
     if file:
         res = flickr.photos_delete(photo_id=file)
-        common.log("Done: " + repr(res))
+        logging.info("Done: " + repr(res))
     else:
-        common.log("Failure: " + repr(file))
+        logging.info("Failure: " + repr(file))
 
 def readFile(fname, flags="r"):
-    common.log(repr(fname) + " - " + repr(flags))
+    logging.info(repr(fname) + " - " + repr(flags))
 
     if not os.path.exists(fname):
-        common.log("File doesn't exist")
+        logging.info("File doesn't exist")
         return False
     d = ""
     try:
@@ -233,17 +237,17 @@ def readFile(fname, flags="r"):
         d = t.read()
         t.close()
     except Exception as e:
-        common.log("Exception: " + repr(e), -1)
+        logging.exception("Exception: reading file")
 
-    common.log("Done")
+    logging.info("Done")
     return d
 
 def saveFile(fname, content, flags="w"):
-    common.log(fname + " - " + str(len(content)) + " - " + repr(flags))
+    logging.info(fname + " - " + str(len(content)) + " - " + repr(flags))
     t = open(fname, flags)
     t.write(content)
     t.close()
-    common.log("Done")
+    logging.info("Done")
 
 def main():
     global conf
@@ -269,51 +273,51 @@ def main():
         envargs += ["ANNEX_FILE=" + ANNEX_FILE]
     if GIT_TOP_LEVEL:
         envargs += ["GIT_TOP_LEVEL=" + GIT_TOP_LEVEL]
-    common.log("ARGS: " + repr(" ".join(envargs + args)))
+    logging.info("ARGS: " + repr(" ".join(envargs + args)))
 
     conf = readFile(configfile)
     try:
         conf = json.loads(conf)
     except Exception as e:
-        common.log("Traceback EXCEPTION: " + repr(e))
-        common.log("Couldn't parse conf: " + repr(conf))
+        logging.exception("conf error")
+        logging.info("Couldn't parse conf: " + repr(conf))
         conf = {"folder": "gitannex"}
 
-    common.log("Conf: " + repr(conf), 2)
+    logging.info("Conf: " + repr(conf))
     changed = False
     if "uname" not in conf:
-        common.log("Asking user for email address")
-        print("Please make sure your email address has been associated flickr.")
+        logging.info("Asking user for email address")
+        print("Please make sure your email address has been associated with flickr.")
         conf["uname"] = raw_input("Please enter your flickr email address: ")
-        common.log("e-mail set to: " + conf["uname"])
+        logging.info("e-mail set to: " + conf["uname"])
         changed = True
 
     if "encrypted" not in conf:
         conf["encrypted"] = "?"
-        common.log("Asking user for encryption")
+        logging.info("Asking user for encryption")
         while (conf["encrypted"].lower().find("y") == -1 and conf["encrypted"].lower().find("n") == -1 ):
             conf["encrypted"] = raw_input("Should uploaded files be encrypted [yes/no]: ")
         conf["encrypted"] = conf["encrypted"].lower().find("y") > -1
-        common.log("encryption set to: " + repr(conf["encrypted"]))
+        logging.info("encryption set to: " + repr(conf["encrypted"]))
         changed = True
 
     login(conf["uname"])
     ANNEX_FOLDER = conf["folder"]
     page=1
-    common.log("Photoset %s searching for %s" % (repr(ANNEX_FOLDER), repr(conf["folder"])))
+    logging.info("Photoset %s searching for %s" % (repr(ANNEX_FOLDER), repr(conf["folder"])))
     while ANNEX_FOLDER == conf["folder"]:
-        common.log("Trying page: " + repr(page))
+        logging.info("Trying page: " + repr(page))
         sets = flickr.photosets_getList(per_page=500)
         sets = sets.find('photosets')
         for s in sets.findall('photoset'):
             if s[0].text == conf["folder"]:
-                common.log("Photoset %s found: %s" % (s[0].text, repr(s[0].text)))
+                logging.info("Photoset %s found: %s" % (s[0].text, repr(s[0].text)))
                 ANNEX_FOLDER = long(s.attrib["id"])
                 break
         if int(sets.attrib["pages"]) > page:
             page +=1
         else:
-            common.log("Error. found nothing:" + repr(sets.attrib))
+            logging.info("Error. found nothing:" + repr(sets.attrib))
             break
         
     if not conf["encrypted"] and ANNEX_KEY and not verifyFileType(ANNEX_KEY):
@@ -342,7 +346,7 @@ def main():
             setup = '''
 Please run the following commands in your annex directory:
 
-git config annex.flickr-hook '/usr/bin/python2 {scriptname}/flickrannex.py'
+git config annex.flickr-hook '{scriptname}/flickrannex.py'
 
 # If you have a direct mode repository and want to use your directores as tags, use this hook instead
 git config annex.flickr-hook 'GIT_TOP_LEVEL=`git rev-parse --show-toplevel` /usr/bin/python2 {scriptname}/flickrannex.py'
@@ -355,7 +359,7 @@ git annex content flickr exclude=largerthan=30mb
 git annex content flickr uuid include=*.jpg or include=*.jpeg or include=*.gif or include=*.png
 '''.format(scriptname=os.path.abspath(sys.argv[0]), encryption=encryption)
             print setup
-            common.log("Saving " + repr(configfile), 0)
+            logging.info("Saving " + repr(configfile))
             saveFile(configfile, json.dumps(conf))
         else:
             print("Error during setup. Please try again")
@@ -364,7 +368,7 @@ git annex content flickr uuid include=*.jpg or include=*.jpeg or include=*.gif o
         sys.exit(1)
 
 t = time.time()
-common.log("START")
+logging.info("START")
 if __name__ == '__main__':
     main()
-common.log("STOP: %ss" % int(time.time() - t))
+logging.info("STOP: %ss" % int(time.time() - t))

@@ -111,13 +111,3 @@ def fetchPage(params={}):
         params["error"] = str(int(get("error", "0")) + 1)
         ret_obj = fetchPage(params)
         return ret_obj
-
-def log(description, level=0):
-    if dbglevel > level:
-        timestamp = time.strftime("%H:%M:%S", time.localtime())
-        try:
-            data = "%s [%s] %s : '%s'" % (timestamp, plugin, inspect.stack()[1][3], description)
-        except:
-            data = "FALLBACK %s [%s] %s : '%s'" % (timestamp, plugin, inspect.stack()[1][3], repr(description))
-
-        sys.stderr.write(data + "\n")
